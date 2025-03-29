@@ -1,8 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
-
 set /p input=Enter folder name: 
-
 :: Set working directories
 set tempDir=%TEMP%\RePKG_Temp
 set zipFile=%tempDir%\RePKG.zip
@@ -25,20 +23,31 @@ echo RePKG executable not found after extraction!
 exit /b
 
 :found
-mkdir "%outputDir%" 2>nul
-
 if exist "C:\Program Files (x86)\Steam\steamapps\workshop\content\431960\%input%\scene.pkg" (
+    mkdir "%outputDir%" 2>nul
     "%repkgExe%" extract -e tex -s -o "%outputDir%" "C:\Program Files (x86)\Steam\steamapps\workshop\content\431960\%input%\scene.pkg"
     
     DEL /S *.tex *.tex-json
 ) else (
-    echo No scene.pkg file found. Collecting MP4 files instead...
+    :: Check if any MP4 files exist before creating output directory
+    set mp4Found=0
     for /r "C:\Program Files (x86)\Steam\steamapps\workshop\content\431960\%input%" %%F in (*.mp4) do (
-        xcopy "%%F" "%outputDir%\" /Y
+        set mp4Found=1
+        goto mp4Exists
+    )
+    
+    :mp4Exists
+    if !mp4Found!==1 (
+        echo Found MP4 files, copying...
+        mkdir "%outputDir%" 2>nul
+        for /r "C:\Program Files (x86)\Steam\steamapps\workshop\content\431960\%input%" %%F in (*.mp4) do (
+            xcopy "%%F" "%outputDir%\" /Y
+        )
+    ) else (
+        echo No MP4 files found, this script does not support Web or Application wallpapers. You would be better off copying those manually.
     )
 )
 
 endlocal
-
 echo Thank you to ShikuTeshi on steam and github.com/notscuffed/repkg
 pause
